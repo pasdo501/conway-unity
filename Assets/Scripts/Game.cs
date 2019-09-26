@@ -9,6 +9,7 @@ public class Game : MonoBehaviour
         get { return grid; }
         set { grid = value; }
     }
+    public Sprite sprite;
     private int[,] grid;
     private int vertical;
     private int horizontal;
@@ -26,11 +27,19 @@ public class Game : MonoBehaviour
         Grid = new int[rows, cols];
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                Grid[i, j] = Random.Range(0, 2);
+                Grid[i, j] = Random.Range(0, 10);
+                populateCell(i, j, Grid[i,j]);
             }
         }
-        
-        Debug.Log("Done");
+    }
+
+    private void populateCell(int y, int x, int val)
+    {
+        GameObject g = new GameObject($"X: {x}; Y: {y}");
+        g.transform.position = new Vector2(x - (horizontal -.5f), y - (vertical - .5f));
+        var s = g.AddComponent<SpriteRenderer>();
+        s.sprite = sprite;
+        s.color = val < 2 ? Color.white : Color.black;
     }
 
     // Update is called once per frame
