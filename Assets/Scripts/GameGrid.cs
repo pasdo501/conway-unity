@@ -32,6 +32,19 @@ public class GameGrid
     /// Sprite component property
     /// </summary>
     private Sprite sprite;
+    /// <summary>
+    /// Threshold of neighbours required for a dead cell to become live
+    /// </summary>
+    private const int BIRTH_THRESH = 3;
+    /// <summary>
+    /// Threshold of neighbour count at or below which a live cell will die
+    /// </summary>
+    private const int ISOLATION_TRESH = 1;
+    /// <summary>
+    /// Threshold of neighbour count at or above which a live cell will die
+    /// </summary>
+    private const int OVERCROWDING_TRESH = 4;
+
 
     /// <summary>The class constructor. Populates the grid with cells that are
     /// randomly determined to be either dead or alive. The chances of a cell
@@ -76,11 +89,12 @@ public class GameGrid
                 Cell current = grid[row, col];
                 int neighbourCount = LiveNeighbourCount(row, col);
                 if (!current.Alive) {
-                    if (neighbourCount == 3) {
+                    if (neighbourCount == BIRTH_THRESH) {
                         toUpdate.Push(current);
                     }
                 } else {
-                    if (neighbourCount <= 1 || neighbourCount >= 4) {
+                    if (neighbourCount <= ISOLATION_TRESH ||
+                        neighbourCount >= OVERCROWDING_TRESH) {
                         toUpdate.Push(current);
                     }
                 }
