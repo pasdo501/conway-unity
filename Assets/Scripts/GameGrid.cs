@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 
 /// <summary>
@@ -44,6 +45,18 @@ public class GameGrid
     /// Threshold of neighbour count at or above which a live cell will die
     /// </summary>
     private const int OVERCROWDING_TRESH = 4;
+    /// <summary>
+    /// Current generation of the simulation
+    /// </summary>
+    private int generation = 0;
+    /// <summary>
+    /// The current population of live cells
+    /// </summary>
+    private int population = 0;
+    /// <summary>
+    /// Reference to the UI status text element
+    /// </summary>
+    private Text displayText;
 
 
     /// <summary>The class constructor. Populates the grid with cells that are
@@ -56,22 +69,33 @@ public class GameGrid
     {
         this.sprite = sprite;
 
+        displayText = GameObject.Find("StatusText")?.GetComponent<Text>();
+        if (displayText == null) {
+            Debug.Log("StatusText element or text component not found," +
+                " is this intentional?");
+        }
+
         vertical = (int) Camera.main.orthographicSize;
         horizontal = vertical * (Screen.width / Screen.height);
 
         cols = horizontal * 2;
         rows = vertical * 2;
 
+
         grid = new Cell[rows, cols];
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 float val = Random.Range(0f, 1f);
-                bool alive = val <= .2f;
+                bool alive = val <= .08f;
                 Vector2 position = new Vector2(j - (horizontal -.5f), i - (vertical - .5f));
                 Cell c = new Cell(sprite, alive, position);
                 grid[i, j] = c;
+                if (alive) {
+                    population++;
+                }
             }
         }
+        UpdateText();
     }
 
     /// <summary>
@@ -103,7 +127,26 @@ public class GameGrid
 
         while (toUpdate.Count > 0) {
             Cell c = toUpdate.Pop();
+            
+            if (c.Alive)
+                population--;
+            else
+                population++;
+
             c.ToggleState();
+        }
+        generation++;
+        UpdateText();
+    }
+
+    /// <summary>
+    /// Update the status text area of the simulation with the current
+    /// generation and population.
+    /// </summary>
+    private void UpdateText()
+    {
+        if (displayText != null) {
+            displayText.text = $"Generation {generation}\nPopulation {population}";
         }
     }
 
