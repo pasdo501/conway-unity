@@ -57,6 +57,8 @@ public class GameGrid
     /// Reference to the UI status text element
     /// </summary>
     private Text displayText;
+    // Profiling Purposes
+    private float timer = 0f;
 
 
     /// <summary>The class constructor. Populates the grid with cells that are
@@ -146,7 +148,10 @@ public class GameGrid
     private void UpdateText()
     {
         if (displayText != null) {
-            displayText.text = $"Generation {generation}\nPopulation {population}";
+            timer += Time.deltaTime;
+            int seconds = (int) timer % 60;
+            float generationsPerSecond = seconds < 1 ? 0 : generation / seconds;
+            displayText.text = $"Generation {generation}\nPopulation {population}\nGpS: {generationsPerSecond}";
         }
     }
 
