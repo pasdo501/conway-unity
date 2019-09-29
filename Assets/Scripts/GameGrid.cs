@@ -230,7 +230,7 @@ public class GameGrid
             timer += Time.deltaTime;
             int seconds = (int) timer % 60;
             float generationsPerSecond = seconds < 1 ? 0 : generation / seconds;
-            displayText.text = $"Generation {generation}\nPopulation {population}\nGpS: {generationsPerSecond}";
+            displayText.text = $"Generation {generation}\nPopulation {population}\nGens/s: {generationsPerSecond}";
         }
     }
 
