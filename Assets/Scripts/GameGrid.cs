@@ -158,7 +158,15 @@ public class GameGrid
     /// <param name="col">The column of the cell being toggled</param>
     private void ToggleCell(int row, int col)
     {
-        int delta = (dataGrid[row, col] & 0x01) == 0x01 ? -2 : 2;
+        int delta;
+        if ((dataGrid[row, col] & 0x01) == 0x01) {
+            delta = -2;
+            population--;
+        } else {
+            delta = 2;
+            population++;
+        }
+
         // Toggle the state
         dataGrid[row, col] ^= 0x01;
 
