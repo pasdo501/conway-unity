@@ -10,19 +10,12 @@ using UnityEngine.UI;
 public class GameGrid
 {
     /// <summary> 
-    /// The Grid represented as an array
+    /// Grid storing references to the Cells in the game. Just in charge
+    /// of toggling colour on and off
     /// </summary>
     private Cell[,] grid;
     /// <summary>
     /// Vertical window size (based on the camera)
-    /// </summary>
-    private int vertical;
-    /// <summary>
-    /// Horizontal window size (based on the camera)
-    /// </summary>
-    private int horizontal;
-    /// <summary>
-    /// Number of columns in the grid
     /// </summary>
     private int cols;
     /// <summary>
@@ -57,13 +50,43 @@ public class GameGrid
     /// Reference to the UI status text element
     /// </summary>
     private Text displayText;
-    // Profiling Purposes
+    /// <summary>
+    /// Timer for profiling purposes
+    /// </summary>
     private float timer = 0f;
+    /// <summary>
+    /// Grid keeping track of game data (cell state, neighbour count)
+    /// </summary>
+    /// <remark>
+    /// Each cell is represented by a byte. The top 3 bits are not used,
+    /// bits 5 - 2 store the live neighbour count of a cell, while the lowest
+    /// bit determines whether the cell is alive (high) or dead (low).
+    /// i.e. [XXXN NNNS] where X is an unused bit, N is a bit used to store
+    /// neighbour count and S is used to track the cell's state.
+    /// </remark>
+    private byte[,] dataGrid;
+    /// <summary>
+    /// Offset to the 8 neighbours of an index in the grid.
+    /// </summary>
+    /// <value>
+    /// In order: top left, top, top right, left, right, bottom left,
+    /// bottom, bottom right.
+    /// </value>
+    private int[,] neighbours = {
+        // Above
+        {-1, -1}, {-1, 0}, {-1, 1},
+        // Sides
+        {0, -1}, {0, 1},
+        // Below
+        {1, -1}, {1, 0}, {1, 1}
+    };
 
 
-    /// <summary>The class constructor. Populates the grid with cells that are
+    /// <summary>
+    /// The class constructor. Populates the grid with cells that are
     /// randomly determined to be either dead or alive. The chances of a cell
-    /// being alive are 20%.</summary>
+    /// being alive are 8%.
+    /// </summary>
     /// <param name="sprite">
     /// The sprite to be used by individual cells in the grid.
     /// </param>
@@ -77,14 +100,16 @@ public class GameGrid
                 " is this intentional?");
         }
 
-        vertical = (int) Camera.main.orthographicSize;
-        horizontal = vertical * (Screen.width / Screen.height);
+        int vertical = (int) Camera.main.orthographicSize;
+        int horizontal = vertical * (Screen.width / Screen.height);
 
         cols = horizontal * 2;
         rows = vertical * 2;
 
 
         grid = new Cell[rows, cols];
+        dataGrid = new byte[rows, cols];
+
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 float val = Random.Range(0f, 1f);
@@ -94,10 +119,56 @@ public class GameGrid
                 grid[i, j] = c;
                 if (alive) {
                     population++;
+                    dataGrid[i, j] = 0x01;
+                } else {
+                    dataGrid[i, j] = 0x00;
                 }
             }
         }
+        InitialiseNeighbourCount();
         UpdateText();
+    }
+
+    /// <summary>
+    /// Initialises the neighbour count of each cell in the grid. Neighbour
+    /// count is stored in bits  - 1 of a byte
+    /// </summary>
+    private void InitialiseNeighbourCount()
+    {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                for (int k = 0; k < neighbours.GetLength(0); k++) {
+                    int y = WrapIndex(i, neighbours[k, 0], this.rows);
+                    int x = WrapIndex(j, neighbours[k, 1], this.cols);
+
+                    if ((dataGrid[y, x] & 0x01) == 0x01) {
+                        dataGrid[i, j] += 2;
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Toggles a cell in a given <paramref name="row"/> and 
+    /// <paramref name="col"/> from alive to dead. The cell's neigbours'
+    /// live neighbour counts are also updated to reflect this change
+    /// </summary>
+    /// <param name="row">The row of the cell being toggled</param>
+    /// <param name="col">The column of the cell being toggled</param>
+    private void ToggleCell(int row, int col)
+    {
+        int delta = (dataGrid[row, col] & 0x01) == 0x01 ? -2 : 2;
+        // Toggle the state
+        dataGrid[row, col] ^= 0x01;
+
+        // Update neighbours' neighbour counts
+        for (int i = 0; i < neighbours.GetLength(0); i++) {
+            int y = WrapIndex(row, neighbours[i, 0], this.rows);
+            int x = WrapIndex(col, neighbours[i, 1], this.cols);
+
+            dataGrid[y, x] = (byte) (dataGrid[y, x] + delta);
+        }
     }
 
     /// <summary>
@@ -109,33 +180,33 @@ public class GameGrid
     /// </summary>
     public void Update()
     {
-        Stack<Cell> toUpdate = new Stack<Cell>();
+        Stack<int[]> changeList = new Stack<int[]>();
         for (int row = 0; row < this.rows; row++) {
             for (int col = 0; col < this.cols; col++) {
-                Cell current = grid[row, col];
-                int neighbourCount = LiveNeighbourCount(row, col);
-                if (!current.Alive) {
-                    if (neighbourCount == BIRTH_THRESH) {
-                        toUpdate.Push(current);
+                byte curr = dataGrid[row, col];
+                byte neighbourCount = (byte) (curr >> 1);
+                // Dead Cell, no neighbours
+                if (curr == 0) continue;
+
+                int[] indices = {row, col};
+                if ((curr & 0x01) == 0x01) {
+                    if (neighbourCount >= OVERCROWDING_TRESH ||
+                        neighbourCount <= ISOLATION_TRESH) {
+                        changeList.Push(indices);
                     }
                 } else {
-                    if (neighbourCount <= ISOLATION_TRESH ||
-                        neighbourCount >= OVERCROWDING_TRESH) {
-                        toUpdate.Push(current);
+                    if (neighbourCount == BIRTH_THRESH) {
+                        changeList.Push(indices);
                     }
                 }
             }
         }
 
-        while (toUpdate.Count > 0) {
-            Cell c = toUpdate.Pop();
-            
-            if (c.Alive)
-                population--;
-            else
-                population++;
+        while (changeList.Count > 0) {
+            int[] curr = changeList.Pop();
+            ToggleCell(curr[0], curr[1]);
 
-            c.ToggleState();
+            grid[curr[0], curr[1]].ToggleState();
         }
         generation++;
         UpdateText();
@@ -153,37 +224,6 @@ public class GameGrid
             float generationsPerSecond = seconds < 1 ? 0 : generation / seconds;
             displayText.text = $"Generation {generation}\nPopulation {population}\nGpS: {generationsPerSecond}";
         }
-    }
-
-    /// <summary>
-    /// Method to count the number of living neighbours of a cell in a given
-    /// <paramref name="row"/> and <paramref name="column"/>.
-    /// </summary>
-    /// <param name="row">The row of the cell</param>
-    /// <param name="column">The column of the cell</param>
-    /// <returns>The number of live neighbours of the cell</returns>
-    private int LiveNeighbourCount(int row, int column)
-    {
-        int neighbourCount = 0;
-
-        int[,] neighbours = {
-            // Above
-            {-1, -1}, {-1, 0}, {-1, 1},
-            // Sides
-            {0, -1}, {0, 1},
-            // Below
-            {1, -1}, {1, 0}, {1, 1}
-        };
-
-        for (int i = 0; i < neighbours.GetLength(0); i++) {
-            int y = WrapIndex(row, neighbours[i, 0], this.rows);
-            int x = WrapIndex(column, neighbours[i, 1], this.cols);
-
-            if (grid[y, x].Alive)
-                neighbourCount++;
-        }
-
-        return neighbourCount;
     }
 
     /// <summary>

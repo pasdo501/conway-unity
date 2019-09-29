@@ -31,6 +31,8 @@ public class Game : MonoBehaviour
     /// </summary>
     void Update()
     {
-        grid.Update();
+        if (grid != null) {
+            grid.Update();
+        }
     }
 }
