@@ -15,7 +15,7 @@ Where X is an unused bit; N is the cell's live neighbour count; S is the cell's 
 This implementation is an adapted version of [Michael Abrash's optimised version of Life](http://www.jagregory.com/abrash-black-book/#chapter-18-its-a-plain-wonderful-life) - see Listing 17.5 L17-5.CPP.
 
 ## Optimisation Notes
-Profiling of the initial (very simple) implementation suggested 94% of CPU usage was down to the [LiveNeighbourCount function](https://github.com/pasdo501/conway-unity/blob/master/Assets/Scripts/GameGrid.cs#L160) (function used to count how many live neighbours a cell has).
+Profiling of the initial (very simple) implementation suggested 94% of CPU usage was down to the [LiveNeighbourCount function](https://github.com/pasdo501/conway-unity/blob/d9bea95915779066b179f0f81c63499116d2fdc2/Assets/Scripts/GameGrid.cs#L165) (function used to count how many live neighbours a cell has).
 
 This initial implementation resulted in ~20 - 25 generations / second.
 
