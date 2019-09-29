@@ -19,7 +19,7 @@ Profiling of the initial (very simple) implementation suggested 94% of CPU usage
 
 This initial implementation resulted in ~20 - 25 generations / second.
 
-The optimised implementation is heavily based on [Michael Abrash's optimised version of the simulation](http://www.jagregory.com/abrash-black-book/#chapter-18-its-a-plain-wonderful-life). While not making use of pointer arithmetic and still using a 2D array with a wrapping index function, CPU usage by the main update loop has dropped dramatically (~11%), with the result now ~60+ generations / second.
+The optimised implementation is heavily based on [Michael Abrash's optimised version of the simulation](http://www.jagregory.com/abrash-black-book/#chapter-18-its-a-plain-wonderful-life). While not making use of pointer arithmetic and still using a 2D array with a wrapping index function, CPU usage by the main update loop has dropped dramatically (~11%), with the result now ~60 generations / second (possible limited by Unity's framerate?).
 
 ---
 

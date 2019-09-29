@@ -23,10 +23,6 @@ public class GameGrid
     /// </summary>
     private int rows;
     /// <summary>
-    /// Sprite component property
-    /// </summary>
-    private Sprite sprite;
-    /// <summary>
     /// Threshold of neighbours required for a dead cell to become live
     /// </summary>
     private const int BIRTH_THRESH = 3;
@@ -50,10 +46,6 @@ public class GameGrid
     /// Reference to the UI status text element
     /// </summary>
     private Text displayText;
-    /// <summary>
-    /// Timer for profiling purposes
-    /// </summary>
-    private float timer = 0f;
     /// <summary>
     /// Grid keeping track of game data (cell state, neighbour count)
     /// </summary>
@@ -92,8 +84,6 @@ public class GameGrid
     /// </param>
     public GameGrid(Sprite sprite)
     {
-        this.sprite = sprite;
-
         displayText = GameObject.Find("StatusText")?.GetComponent<Text>();
         if (displayText == null) {
             Debug.Log("StatusText element or text component not found," +
@@ -227,10 +217,7 @@ public class GameGrid
     private void UpdateText()
     {
         if (displayText != null) {
-            timer += Time.deltaTime;
-            int seconds = (int) timer % 60;
-            float generationsPerSecond = seconds < 1 ? 0 : generation / seconds;
-            displayText.text = $"Generation {generation}\nPopulation {population}\nGens/s: {generationsPerSecond}";
+            displayText.text = $"Generation {generation}\nPopulation {population}";
         }
     }
 
