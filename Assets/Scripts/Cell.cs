@@ -9,6 +9,7 @@ public class Cell
     /// Reference to the SpriteRenderer component of the Cell's game object.
     /// </summary>
     private SpriteRenderer spriteRenderer;
+    private GameObject self;
 
     /// <summary>
     /// Constructor. Creates a Cell with a given <paramref name="sprite"/>,
@@ -22,9 +23,9 @@ public class Cell
     {
         
 
-        GameObject g = new GameObject("Cell");
-        g.transform.position = position;
-        spriteRenderer = g.AddComponent<SpriteRenderer>();
+        self = new GameObject("Cell");
+        self.transform.position = position;
+        spriteRenderer = self.AddComponent<SpriteRenderer>();
         spriteRenderer.sprite = sprite;
         spriteRenderer.color = Color.green;
         spriteRenderer.enabled = alive;
@@ -36,5 +37,13 @@ public class Cell
     public void ToggleState()
     {
         spriteRenderer.enabled = !spriteRenderer.enabled;
+    }
+
+    /// <summary>
+    /// Cleanup method - destroys the game object attached to the cell.
+    /// </summary>
+    public void CleanUp()
+    {
+        Object.Destroy(self);
     }
 }

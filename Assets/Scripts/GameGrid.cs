@@ -120,6 +120,17 @@ public class GameGrid
     }
 
     /// <summary>
+    /// Cleanup method for the grid. In turn calls the cleanup method of
+    /// each individual cell.
+    /// </summary>
+    public void CleanUp()
+    {
+        foreach (Cell c in grid) {
+            c.CleanUp();
+        }
+    }
+
+    /// <summary>
     /// Initialises the neighbour count of each cell in the grid. Neighbour
     /// count is stored in bits  - 1 of a byte
     /// </summary>
